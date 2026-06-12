@@ -32,7 +32,7 @@ export default function CalculatorTabs() {
       <div className="flex flex-col gap-6 md:flex-row">
         {/* Nivel 1: modo (lateral en desktop) */}
         <aside className="md:w-48 md:shrink-0">
-          <nav className="flex gap-1 overflow-x-auto rounded-xl bg-slate-200/70 p-1 md:flex-col md:overflow-visible">
+          <nav className="flex gap-1 overflow-x-auto rounded-xl bg-lavanda p-1 md:flex-col md:overflow-visible">
             {MODOS.map((t) => (
               <button
                 key={t.value}
@@ -41,8 +41,8 @@ export default function CalculatorTabs() {
                 className={[
                   "whitespace-nowrap rounded-lg px-4 py-2 text-left text-sm font-semibold transition md:w-full",
                   modo === t.value
-                    ? "bg-white text-emerald-700 shadow-sm"
-                    : "text-slate-600 hover:text-slate-800",
+                    ? "bg-white text-violeta shadow-sm"
+                    : "text-tinta/70 hover:text-tinta",
                 ].join(" ")}
               >
                 {t.label}
@@ -58,7 +58,7 @@ export default function CalculatorTabs() {
           ) : (
             <>
               {/* Nivel 2: instrumento */}
-              <div className="mb-6 inline-flex flex-wrap gap-1 rounded-lg bg-slate-100 p-1">
+              <div className="mb-6 inline-flex flex-wrap gap-1 rounded-lg bg-lavanda p-1">
                 {INSTRUMENTOS.map((t) => (
                   <button
                     key={t.value}
@@ -67,8 +67,8 @@ export default function CalculatorTabs() {
                     className={[
                       "rounded-md px-4 py-1.5 text-sm font-medium transition",
                       inst === t.value
-                        ? "bg-white text-emerald-700 shadow-sm"
-                        : "text-slate-500 hover:text-slate-700",
+                        ? "bg-white text-violeta shadow-sm"
+                        : "text-tinta/60 hover:text-tinta",
                     ].join(" ")}
                   >
                     {t.label}

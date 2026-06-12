@@ -146,11 +146,11 @@ export default function Calculator({ mode = "dias" }: { mode?: Modo }) {
               value={formatARS(result.ivaDdmm)}
             />
 
-            <div className="mt-5 rounded-xl bg-emerald-50 p-5 text-center ring-1 ring-emerald-200">
-              <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
+            <div className="mt-5 rounded-xl bg-violeta p-5 text-center">
+              <p className="text-xs font-semibold uppercase tracking-wide text-lavanda">
                 Monto neto que recibe el cliente
               </p>
-              <p className="mt-1 whitespace-nowrap text-2xl font-bold tabular-nums text-emerald-700 sm:text-3xl">
+              <p className="mt-1 whitespace-nowrap text-2xl font-bold tabular-nums text-white sm:text-3xl">
                 {formatARS(result.clienteRecibe)}
               </p>
             </div>

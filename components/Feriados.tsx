@@ -47,7 +47,7 @@ export default function Feriados() {
           <span className="text-slate-400">Cargando…</span>
         )}
         {estado === "compartido" && (
-          <span className="text-emerald-600">
+          <span className="text-violeta">
             ✓ Compartidos: los ve todo el que abra la app.
           </span>
         )}
@@ -82,7 +82,7 @@ export default function Feriados() {
           type="button"
           onClick={agregar}
           disabled={!nuevo || sinPassword}
-          className="shrink-0 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-40"
+          className="shrink-0 rounded-lg bg-violeta px-4 py-2 text-sm font-semibold text-white transition hover:bg-violeta-comp disabled:cursor-not-allowed disabled:opacity-40"
         >
           Agregar
         </button>

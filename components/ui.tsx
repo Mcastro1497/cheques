@@ -6,7 +6,7 @@ export function inputCls(error?: boolean, compact?: boolean): string {
     compact ? "px-2 py-1.5 text-sm" : "px-3 py-2.5 text-base",
     error
       ? "border-red-400 focus:border-red-500 focus:ring-red-200"
-      : "border-slate-300 focus:border-emerald-500 focus:ring-emerald-200",
+      : "border-slate-300 focus:border-violeta focus:ring-violeta/25",
   ].join(" ");
 }
 
@@ -108,7 +108,7 @@ export function Toggle({
             "rounded-md font-medium transition",
             compact ? "px-3 py-1 text-sm" : "px-5 py-1.5 text-sm",
             value === opt.v
-              ? "bg-white text-emerald-700 shadow-sm"
+              ? "bg-white text-violeta shadow-sm"
               : "text-slate-500 hover:text-slate-700",
           ].join(" ")}
         >
@@ -138,7 +138,7 @@ export function SegmentedControl<T extends string>({
           className={[
             "flex-1 whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition",
             value === opt.value
-              ? "bg-white text-emerald-700 shadow-sm"
+              ? "bg-white text-violeta shadow-sm"
               : "text-slate-500 hover:text-slate-700",
           ].join(" ")}
         >

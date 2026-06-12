@@ -161,7 +161,7 @@ export default function CarteraCalculator({ mode = "dias" }: { mode?: Modo }) {
           <button
             type="button"
             onClick={addItem}
-            className="rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-emerald-700"
+            className="rounded-lg bg-violeta px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-violeta-comp"
           >
             + Agregar
           </button>
@@ -343,11 +343,11 @@ export default function CarteraCalculator({ mode = "dias" }: { mode?: Modo }) {
               value={formatARS(totales.ivaDdmm)}
             />
 
-            <div className="mt-5 rounded-xl bg-emerald-50 p-5 text-center ring-1 ring-emerald-200">
-              <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
+            <div className="mt-5 rounded-xl bg-violeta p-5 text-center">
+              <p className="text-xs font-semibold uppercase tracking-wide text-lavanda">
                 Total neto que recibe el cliente
               </p>
-              <p className="mt-1 whitespace-nowrap text-2xl font-bold tabular-nums text-emerald-700 sm:text-3xl">
+              <p className="mt-1 whitespace-nowrap text-2xl font-bold tabular-nums text-white sm:text-3xl">
                 {formatARS(totales.clienteRecibe)}
               </p>
             </div>
@@ -420,10 +420,10 @@ export default function CarteraCalculator({ mode = "dias" }: { mode?: Modo }) {
                         value={formatARS(c.res.ivaDdmm)}
                       />
                       <div className="flex items-center justify-between gap-4 pt-1">
-                        <span className="text-sm font-semibold text-emerald-700">
+                        <span className="text-sm font-semibold text-violeta">
                           Neto
                         </span>
-                        <span className="whitespace-nowrap text-base font-bold tabular-nums text-emerald-700">
+                        <span className="whitespace-nowrap text-base font-bold tabular-nums text-violeta">
                           {formatARS(c.res.clienteRecibe)}
                         </span>
                       </div>
