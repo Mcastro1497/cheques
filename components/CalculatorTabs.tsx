@@ -2,18 +2,20 @@
 
 import { useState } from "react";
 import Calculator from "./Calculator";
+import CarteraCalculator from "./CarteraCalculator";
 import PagareCalculator from "./PagareCalculator";
 
-type Tab = "echeq" | "pagare";
+type Tab = "echeq" | "cartera" | "pagare";
 
 export default function CalculatorTabs() {
   const [tab, setTab] = useState<Tab>("echeq");
 
   return (
     <div>
-      <div className="mb-6 inline-flex rounded-xl bg-slate-200/70 p-1">
+      <div className="mb-6 inline-flex flex-wrap rounded-xl bg-slate-200/70 p-1">
         {[
           { label: "eCheq", value: "echeq" as const },
+          { label: "Cartera eCheq", value: "cartera" as const },
           { label: "Pagaré", value: "pagare" as const },
         ].map((t) => (
           <button
@@ -32,7 +34,9 @@ export default function CalculatorTabs() {
         ))}
       </div>
 
-      {tab === "echeq" ? <Calculator /> : <PagareCalculator />}
+      {tab === "echeq" && <Calculator />}
+      {tab === "cartera" && <CarteraCalculator />}
+      {tab === "pagare" && <PagareCalculator />}
     </div>
   );
 }
