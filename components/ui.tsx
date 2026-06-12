@@ -1,9 +1,9 @@
 "use client";
 
-export function inputCls(error?: boolean): string {
+export function inputCls(error?: boolean, compact?: boolean): string {
   return [
-    "w-full rounded-lg border bg-white px-3 py-2.5 text-right text-base tabular-nums outline-none transition",
-    "focus:ring-2",
+    "w-full rounded-lg border bg-white text-right tabular-nums outline-none transition focus:ring-2",
+    compact ? "px-2 py-1.5 text-sm" : "px-3 py-2.5 text-base",
     error
       ? "border-red-400 focus:border-red-500 focus:ring-red-200"
       : "border-slate-300 focus:border-emerald-500 focus:ring-emerald-200",
@@ -59,11 +59,13 @@ export function PercentInput({
   onChange,
   error,
   placeholder,
+  compact,
 }: {
   value: string;
   onChange: (v: string) => void;
   error?: boolean;
   placeholder?: string;
+  compact?: boolean;
 }) {
   return (
     <div className="relative">
@@ -73,10 +75,10 @@ export function PercentInput({
         onChange={(e) =>
           onChange(e.target.value.replace(/[^\d.,]/g, "").replace(",", "."))
         }
-        className={inputCls(error) + " pr-7"}
+        className={inputCls(error, compact) + " pr-6"}
         placeholder={placeholder}
       />
-      <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400">
+      <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2 text-slate-400">
         %
       </span>
     </div>
@@ -86,9 +88,11 @@ export function PercentInput({
 export function Toggle({
   value,
   onChange,
+  compact,
 }: {
   value: boolean;
   onChange: (v: boolean) => void;
+  compact?: boolean;
 }) {
   return (
     <div className="inline-flex rounded-lg bg-slate-100 p-1">
@@ -101,7 +105,8 @@ export function Toggle({
           type="button"
           onClick={() => onChange(opt.v)}
           className={[
-            "rounded-md px-5 py-1.5 text-sm font-medium transition",
+            "rounded-md font-medium transition",
+            compact ? "px-3 py-1 text-sm" : "px-5 py-1.5 text-sm",
             value === opt.v
               ? "bg-white text-emerald-700 shadow-sm"
               : "text-slate-500 hover:text-slate-700",

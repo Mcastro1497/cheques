@@ -9,44 +9,66 @@ import {
 } from "react";
 import { startOfDay } from "@/lib/fechas";
 
+type Estado = "cargando" | "compartido" | "local";
+
 interface FechasCtx {
   /** Hoy a medianoche, o null hasta hidratar en el cliente. */
   hoy: Date | null;
-  /** Feriados cargados manualmente, en ISO "YYYY-MM-DD". */
+  /** Feriados cargados, en ISO "YYYY-MM-DD". */
   feriados: string[];
   feriadosSet: Set<string>;
   addFeriado: (iso: string) => void;
   removeFeriado: (iso: string) => void;
+  /** "compartido": persisten en Vercel KV. "local": KV sin configurar. */
+  estado: Estado;
 }
 
 const Context = createContext<FechasCtx | null>(null);
 
-const STORAGE_KEY = "cheques:feriados";
+function ordenar(arr: string[]): string[] {
+  return Array.from(new Set(arr)).sort();
+}
 
 export function FechasProvider({ children }: { children: React.ReactNode }) {
   const [feriados, setFeriados] = useState<string[]>([]);
   const [hoy, setHoy] = useState<Date | null>(null);
-  const [hydrated, setHydrated] = useState(false);
+  const [estado, setEstado] = useState<Estado>("cargando");
 
   useEffect(() => {
     setHoy(startOfDay(new Date()));
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) setFeriados(JSON.parse(raw));
-    } catch {
-      // ignorar storage no disponible / json inválido
-    }
-    setHydrated(true);
+    let activo = true;
+    fetch("/api/feriados")
+      .then((r) => r.json())
+      .then((data) => {
+        if (!activo) return;
+        setFeriados(ordenar(data.feriados ?? []));
+        setEstado(data.configurado ? "compartido" : "local");
+      })
+      .catch(() => {
+        if (activo) setEstado("local");
+      });
+    return () => {
+      activo = false;
+    };
   }, []);
 
-  useEffect(() => {
-    if (!hydrated) return;
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(feriados));
-    } catch {
-      // ignorar
-    }
-  }, [feriados, hydrated]);
+  const addFeriado = (iso: string) => {
+    setFeriados((prev) => ordenar([...prev, iso]));
+    fetch("/api/feriados", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ date: iso }),
+    }).catch(() => {});
+  };
+
+  const removeFeriado = (iso: string) => {
+    setFeriados((prev) => prev.filter((f) => f !== iso));
+    fetch("/api/feriados", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ date: iso }),
+    }).catch(() => {});
+  };
 
   const feriadosSet = useMemo(() => new Set(feriados), [feriados]);
 
@@ -54,12 +76,9 @@ export function FechasProvider({ children }: { children: React.ReactNode }) {
     hoy,
     feriados,
     feriadosSet,
-    addFeriado: (iso) =>
-      setFeriados((prev) =>
-        prev.includes(iso) ? prev : [...prev, iso].sort(),
-      ),
-    removeFeriado: (iso) =>
-      setFeriados((prev) => prev.filter((f) => f !== iso)),
+    addFeriado,
+    removeFeriado,
+    estado,
   };
 
   return <Context.Provider value={value}>{children}</Context.Provider>;

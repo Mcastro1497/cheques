@@ -4,7 +4,7 @@ import { useMemo, useRef, useState } from "react";
 import { calcular, type CalcResult } from "@/lib/calc";
 import { formatARS, formatMilesInput, parseMilesInput } from "@/lib/format";
 import { formatFecha, plazoDesdeVencimiento } from "@/lib/fechas";
-import { Field, PercentInput, ResultRow, Toggle, inputCls } from "./ui";
+import { PercentInput, ResultRow, Toggle, inputCls } from "./ui";
 import { useFechas } from "./FechasProvider";
 import { type Modo } from "./usePlazo";
 
@@ -172,30 +172,23 @@ export default function CarteraCalculator({ mode = "dias" }: { mode?: Modo }) {
             Agregá un eCheq para empezar.
           </p>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-2">
             {items.map((item, idx) => (
               <div
                 key={item.id}
-                className="rounded-xl border border-slate-200 p-4"
+                className="rounded-lg border border-slate-200 px-3 py-2"
               >
-                <div className="mb-3 flex items-center justify-between">
-                  <span className="text-sm font-semibold text-slate-700">
-                    eCheq #{idx + 1}
+                <div className="flex flex-wrap items-end gap-2">
+                  <span className="pb-2 text-xs font-semibold text-slate-400">
+                    #{idx + 1}
                   </span>
-                  <button
-                    type="button"
-                    onClick={() => removeItem(item.id)}
-                    className="text-sm font-medium text-slate-400 transition hover:text-red-500"
-                    aria-label="Eliminar eCheq"
-                  >
-                    Eliminar
-                  </button>
-                </div>
 
-                <div className="space-y-3">
-                  <Field label="Monto">
+                  <label className="min-w-[8rem] flex-1">
+                    <span className="mb-0.5 block text-xs text-slate-500">
+                      Monto
+                    </span>
                     <div className="relative">
-                      <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                      <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2 text-sm text-slate-400">
                         $
                       </span>
                       <input
@@ -206,78 +199,99 @@ export default function CarteraCalculator({ mode = "dias" }: { mode?: Modo }) {
                             montoStr: formatMilesInput(e.target.value),
                           })
                         }
-                        className={inputCls(false) + " pl-7"}
+                        className={inputCls(false, true) + " pl-5"}
                         placeholder="10.000.000"
                       />
                     </div>
-                  </Field>
+                  </label>
 
-                  {mode === "fecha" && (
-                    <Field label="Fecha de vencimiento">
+                  {mode === "dias" ? (
+                    <label className="w-20">
+                      <span className="mb-0.5 block text-xs text-slate-500">
+                        Plazo
+                      </span>
+                      <input
+                        inputMode="numeric"
+                        value={item.plazo}
+                        onChange={(e) =>
+                          updateItem(item.id, {
+                            plazo: e.target.value.replace(/\D/g, ""),
+                          })
+                        }
+                        className={inputCls(false, true)}
+                        placeholder="90"
+                      />
+                    </label>
+                  ) : (
+                    <label className="min-w-[8.5rem] flex-1">
+                      <span className="mb-0.5 block text-xs text-slate-500">
+                        Vencimiento
+                      </span>
                       <input
                         type="date"
                         value={item.venc}
                         onChange={(e) =>
                           updateItem(item.id, { venc: e.target.value })
                         }
-                        className={inputCls(false) + " text-left"}
+                        className={inputCls(false, true) + " text-left"}
                       />
-                      {computed[idx]?.liquidacion &&
-                        computed[idx].plazoDias > 0 && (
-                          <span className="mt-1 block text-xs text-slate-500">
-                            Liquidación (t+{T_HABILES} háb.):{" "}
-                            {formatFecha(computed[idx].liquidacion as Date)} ·{" "}
-                            {computed[idx].plazoDias} días corridos
-                          </span>
-                        )}
-                    </Field>
+                    </label>
                   )}
 
-                  <div
-                    className={
-                      mode === "dias"
-                        ? "grid grid-cols-3 gap-3"
-                        : "grid grid-cols-2 gap-3"
-                    }
-                  >
-                    {mode === "dias" && (
-                      <Field label="Plazo (días)">
-                        <input
-                          inputMode="numeric"
-                          value={item.plazo}
-                          onChange={(e) =>
-                            updateItem(item.id, {
-                              plazo: e.target.value.replace(/\D/g, ""),
-                            })
-                          }
-                          className={inputCls(false)}
-                          placeholder="90"
-                        />
-                      </Field>
-                    )}
-                    <Field label="Tasa (TNA)">
-                      <PercentInput
-                        value={item.tasa}
-                        onChange={(v) => updateItem(item.id, { tasa: v })}
-                        placeholder="22"
-                      />
-                    </Field>
-                    <Field label="Comisión (TNA)">
-                      <PercentInput
-                        value={item.comision}
-                        onChange={(v) => updateItem(item.id, { comision: v })}
-                        placeholder="4"
-                      />
-                    </Field>
-                  </div>
+                  <label className="w-[4.5rem]">
+                    <span className="mb-0.5 block text-xs text-slate-500">
+                      Tasa
+                    </span>
+                    <PercentInput
+                      value={item.tasa}
+                      onChange={(v) => updateItem(item.id, { tasa: v })}
+                      placeholder="22"
+                      compact
+                    />
+                  </label>
 
-                  <Field label="Comprador exento de IVA">
+                  <label className="w-[4.5rem]">
+                    <span className="mb-0.5 block text-xs text-slate-500">
+                      Comisión
+                    </span>
+                    <PercentInput
+                      value={item.comision}
+                      onChange={(v) => updateItem(item.id, { comision: v })}
+                      placeholder="4"
+                      compact
+                    />
+                  </label>
+
+                  <label>
+                    <span className="mb-0.5 block text-xs text-slate-500">
+                      Exento
+                    </span>
                     <Toggle
                       value={item.exento}
                       onChange={(v) => updateItem(item.id, { exento: v })}
+                      compact
                     />
-                  </Field>
+                  </label>
+
+                  <button
+                    type="button"
+                    onClick={() => removeItem(item.id)}
+                    className="pb-1.5 text-lg leading-none text-slate-300 transition hover:text-red-500"
+                    aria-label="Eliminar eCheq"
+                  >
+                    ✕
+                  </button>
                 </div>
+
+                {mode === "fecha" &&
+                  computed[idx]?.liquidacion &&
+                  computed[idx].plazoDias > 0 && (
+                    <span className="mt-1 block text-xs text-slate-500">
+                      Liquidación (t+{T_HABILES} háb.):{" "}
+                      {formatFecha(computed[idx].liquidacion as Date)} ·{" "}
+                      {computed[idx].plazoDias} días corridos
+                    </span>
+                  )}
               </div>
             ))}
           </div>

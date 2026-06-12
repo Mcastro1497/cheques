@@ -29,53 +29,60 @@ export default function CalculatorTabs() {
 
   return (
     <FechasProvider>
-      {/* Nivel 1: modo */}
-      <div className="mb-4 inline-flex flex-wrap gap-1 rounded-xl bg-slate-200/70 p-1">
-        {MODOS.map((t) => (
-          <button
-            key={t.value}
-            type="button"
-            onClick={() => setModo(t.value)}
-            className={[
-              "rounded-lg px-4 py-2 text-sm font-semibold transition",
-              modo === t.value
-                ? "bg-white text-emerald-700 shadow-sm"
-                : "text-slate-600 hover:text-slate-800",
-            ].join(" ")}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
-
-      {modo === "feriados" ? (
-        <Feriados />
-      ) : (
-        <>
-          {/* Nivel 2: instrumento */}
-          <div className="mb-6 inline-flex flex-wrap gap-1 rounded-lg bg-slate-100 p-1">
-            {INSTRUMENTOS.map((t) => (
+      <div className="flex flex-col gap-6 md:flex-row">
+        {/* Nivel 1: modo (lateral en desktop) */}
+        <aside className="md:w-48 md:shrink-0">
+          <nav className="flex gap-1 overflow-x-auto rounded-xl bg-slate-200/70 p-1 md:flex-col md:overflow-visible">
+            {MODOS.map((t) => (
               <button
                 key={t.value}
                 type="button"
-                onClick={() => setInst(t.value)}
+                onClick={() => setModo(t.value)}
                 className={[
-                  "rounded-md px-4 py-1.5 text-sm font-medium transition",
-                  inst === t.value
+                  "whitespace-nowrap rounded-lg px-4 py-2 text-left text-sm font-semibold transition md:w-full",
+                  modo === t.value
                     ? "bg-white text-emerald-700 shadow-sm"
-                    : "text-slate-500 hover:text-slate-700",
+                    : "text-slate-600 hover:text-slate-800",
                 ].join(" ")}
               >
                 {t.label}
               </button>
             ))}
-          </div>
+          </nav>
+        </aside>
 
-          {inst === "echeq" && <Calculator mode={calcMode} />}
-          {inst === "cartera" && <CarteraCalculator mode={calcMode} />}
-          {inst === "pagare" && <PagareCalculator mode={calcMode} />}
-        </>
-      )}
+        {/* Contenido */}
+        <div className="min-w-0 flex-1">
+          {modo === "feriados" ? (
+            <Feriados />
+          ) : (
+            <>
+              {/* Nivel 2: instrumento */}
+              <div className="mb-6 inline-flex flex-wrap gap-1 rounded-lg bg-slate-100 p-1">
+                {INSTRUMENTOS.map((t) => (
+                  <button
+                    key={t.value}
+                    type="button"
+                    onClick={() => setInst(t.value)}
+                    className={[
+                      "rounded-md px-4 py-1.5 text-sm font-medium transition",
+                      inst === t.value
+                        ? "bg-white text-emerald-700 shadow-sm"
+                        : "text-slate-500 hover:text-slate-700",
+                    ].join(" ")}
+                  >
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+
+              {inst === "echeq" && <Calculator mode={calcMode} />}
+              {inst === "cartera" && <CarteraCalculator mode={calcMode} />}
+              {inst === "pagare" && <PagareCalculator mode={calcMode} />}
+            </>
+          )}
+        </div>
+      </div>
     </FechasProvider>
   );
 }

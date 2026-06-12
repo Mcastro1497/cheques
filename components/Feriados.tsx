@@ -6,7 +6,7 @@ import { useFechas } from "./FechasProvider";
 import { inputCls } from "./ui";
 
 export default function Feriados() {
-  const { feriados, addFeriado, removeFeriado } = useFechas();
+  const { feriados, addFeriado, removeFeriado, estado } = useFechas();
   const [nuevo, setNuevo] = useState("");
 
   const agregar = () => {
@@ -21,9 +21,24 @@ export default function Feriados() {
       <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-500">
         Feriados
       </h2>
-      <p className="mb-5 text-sm text-slate-500">
+      <p className="mb-3 text-sm text-slate-500">
         Cargá los feriados que querés excluir al contar los días hábiles del
-        t+2 / t+1. Se guardan en este navegador.
+        t+2 / t+1.
+      </p>
+      <p className="mb-5 text-xs font-medium">
+        {estado === "cargando" && (
+          <span className="text-slate-400">Cargando…</span>
+        )}
+        {estado === "compartido" && (
+          <span className="text-emerald-600">
+            ✓ Compartidos: los ve todo el que abra la app.
+          </span>
+        )}
+        {estado === "local" && (
+          <span className="text-amber-600">
+            ⚠ KV sin configurar: por ahora solo en esta sesión.
+          </span>
+        )}
       </p>
 
       <div className="flex gap-2">
