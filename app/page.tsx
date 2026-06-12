@@ -1,5 +1,5 @@
 import Image from "next/image";
-import Calculator from "@/components/Calculator";
+import CalculatorTabs from "@/components/CalculatorTabs";
 
 export default function Home() {
   return (
@@ -10,7 +10,7 @@ export default function Home() {
         </h1>
       </header>
 
-      <Calculator />
+      <CalculatorTabs />
 
       <div className="mt-12 flex justify-center">
         <Image

@@ -9,10 +9,23 @@ const milesFormatter = new Intl.NumberFormat("es-AR", {
   maximumFractionDigits: 0,
 });
 
+const usdFormatter = new Intl.NumberFormat("es-AR", {
+  style: "currency",
+  currency: "USD",
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
 /** Formatea un número como moneda ARS: $ 9.387.728,06 */
 export function formatARS(value: number): string {
   if (!Number.isFinite(value)) return "—";
   return arsFormatter.format(value);
+}
+
+/** Formatea un número como moneda USD: US$ 9.387.728,06 */
+export function formatUSD(value: number): string {
+  if (!Number.isFinite(value)) return "—";
+  return usdFormatter.format(value);
 }
 
 /**

@@ -1,29 +1,56 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { calcular } from "@/lib/calc";
-import { formatARS, formatMilesInput, parseMilesInput } from "@/lib/format";
-import { Field, PercentInput, ResultRow, Toggle, inputCls } from "./ui";
+import { calcularPagare } from "@/lib/calc";
+import {
+  formatARS,
+  formatMilesInput,
+  formatUSD,
+  parseMilesInput,
+} from "@/lib/format";
+import {
+  Field,
+  NumberInput,
+  PercentInput,
+  ResultRow,
+  SegmentedControl,
+  inputCls,
+} from "./ui";
 
-export default function Calculator() {
+type Moneda = "ARS" | "MEP" | "A3500" | "BNA";
+
+const MONEDAS: { label: string; value: Moneda }[] = [
+  { label: "Pesos", value: "ARS" },
+  { label: "USD MEP", value: "MEP" },
+  { label: "USD A3500", value: "A3500" },
+  { label: "USD BNA", value: "BNA" },
+];
+
+/** Las monedas que requieren tipo de cambio para pesificar el neto. */
+const REQUIERE_TC = (m: Moneda) => m === "A3500" || m === "BNA";
+
+export default function PagareCalculator() {
   const [plazo, setPlazo] = useState("90");
   const [montoStr, setMontoStr] = useState("10.000.000");
   const [tasa, setTasa] = useState("22");
   const [comision, setComision] = useState("4");
-  const [exento, setExento] = useState(true);
+  const [moneda, setMoneda] = useState<Moneda>("ARS");
+  const [tcStr, setTcStr] = useState("");
 
   const plazoNum = Math.floor(Number(plazo));
   const montoNum = parseMilesInput(montoStr);
   const tasaNum = Number(tasa);
   const comisionNum = Number(comision);
+  const tcNum = Number(tcStr);
+  const necesitaTc = REQUIERE_TC(moneda);
 
-  // Validación: todos los números deben ser positivos (plazo y monto > 0).
   const errors = {
     plazo: plazo !== "" && (!Number.isFinite(plazoNum) || plazoNum <= 0),
     monto: montoStr !== "" && montoNum <= 0,
     tasa: tasa !== "" && (!Number.isFinite(tasaNum) || tasaNum < 0),
     comision:
       comision !== "" && (!Number.isFinite(comisionNum) || comisionNum < 0),
+    tc: necesitaTc && tcStr !== "" && (!Number.isFinite(tcNum) || tcNum <= 0),
   };
 
   const inputsValidos =
@@ -32,41 +59,77 @@ export default function Calculator() {
     Number.isFinite(tasaNum) &&
     tasaNum >= 0 &&
     Number.isFinite(comisionNum) &&
-    comisionNum >= 0;
+    comisionNum >= 0 &&
+    (!necesitaTc || (Number.isFinite(tcNum) && tcNum > 0));
 
   const result = useMemo(() => {
     if (!inputsValidos) return null;
-    return calcular({
+    return calcularPagare({
       plazoDias: plazoNum,
       monto: montoNum,
       tasaTNA: tasaNum,
       comisionTNA: comisionNum,
-      exento,
     });
-  }, [inputsValidos, plazoNum, montoNum, tasaNum, comisionNum, exento]);
+  }, [inputsValidos, plazoNum, montoNum, tasaNum, comisionNum]);
+
+  // El monto se ingresa en USD para cualquier moneda USD.
+  const montoEnUSD = moneda !== "ARS";
+  // A3500 / BNA: se pesifica TODO. Se toma el monto descontado (USD), se
+  // multiplica por el TC y el resto de los costos y el neto quedan en pesos.
+  // (Como todo es lineal en el monto, equivale a multiplicar cada ítem por el TC.)
+  const factor = necesitaTc ? tcNum : 1;
+  // Moneda de visualización del detalle: USD solo para MEP; pesos para el resto.
+  const fmt = moneda === "MEP" ? formatUSD : formatARS;
+  const v = (x: number) => fmt(x * factor);
+  // Referencia: neto en USD cuando se pesificó (A3500 / BNA).
+  const netoUSD = result && necesitaTc ? result.neto : null;
 
   return (
     <div className="grid gap-6 md:grid-cols-[1fr_1.4fr]">
       {/* Formulario */}
       <section className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
         <h2 className="mb-5 text-sm font-semibold uppercase tracking-wide text-slate-500">
-          Datos del eCheq
+          Datos del pagaré
         </h2>
 
         <div className="space-y-5">
+          <Field label="Moneda">
+            <SegmentedControl
+              options={MONEDAS}
+              value={moneda}
+              onChange={setMoneda}
+            />
+          </Field>
+
+          {necesitaTc && (
+            <Field
+              label="Tipo de cambio"
+              error={errors.tc ? "Ingresá un tipo de cambio mayor a 0." : undefined}
+            >
+              <NumberInput
+                value={tcStr}
+                onChange={setTcStr}
+                error={errors.tc}
+                placeholder="1000"
+              />
+            </Field>
+          )}
+
           <Field
-            label="Monto del eCheq"
+            label={montoEnUSD ? "Monto del pagaré (USD)" : "Monto del pagaré"}
             error={errors.monto ? "El monto debe ser mayor a 0." : undefined}
           >
             <div className="relative">
               <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
-                $
+                {montoEnUSD ? "US$" : "$"}
               </span>
               <input
                 inputMode="numeric"
                 value={montoStr}
                 onChange={(e) => setMontoStr(formatMilesInput(e.target.value))}
-                className={inputCls(errors.monto) + " pl-7"}
+                className={
+                  inputCls(errors.monto) + (montoEnUSD ? " pl-11" : " pl-7")
+                }
                 placeholder="10.000.000"
               />
             </div>
@@ -108,10 +171,6 @@ export default function Calculator() {
               placeholder="4"
             />
           </Field>
-
-          <Field label="Comprador exento de IVA">
-            <Toggle value={exento} onChange={setExento} />
-          </Field>
         </div>
       </section>
 
@@ -125,36 +184,33 @@ export default function Calculator() {
           <div className="space-y-3">
             <ResultRow
               label="Monto descontado"
-              value={formatARS(result.montoDescontado)}
+              value={v(result.montoDescontado)}
             />
-            <ResultRow label="Interés" value={formatARS(result.interes)} />
+            <ResultRow label="Interés" value={v(result.interes)} />
+            <ResultRow label="Comisión" value={v(result.comisionCobrada)} />
             <ResultRow
-              label="Comisión cobrada"
-              value={formatARS(result.comisionCobrada)}
+              label="IVA (21% s/ comisión)"
+              value={v(result.ivaComision)}
             />
-            {!exento && (
-              <ResultRow
-                label="IVA (21% s/ interés)"
-                value={formatARS(result.iva)}
-              />
-            )}
-            <ResultRow label="Retención IIBB" value={formatARS(result.iibb)} />
-            <ResultRow
-              label="Derechos de mercado"
-              value={formatARS(result.ddmm)}
-            />
+            <ResultRow label="Retención IIBB" value={v(result.iibb)} />
+            <ResultRow label="Derechos de mercado" value={v(result.ddmm)} />
             <ResultRow
               label="IVA (21% s/ derechos)"
-              value={formatARS(result.ivaDdmm)}
+              value={v(result.ivaDdmm)}
             />
 
             <div className="mt-5 rounded-xl bg-emerald-50 p-5 text-center ring-1 ring-emerald-200">
               <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
-                Monto neto que recibe el cliente
+                Neto que recibe el cliente
               </p>
               <p className="mt-1 whitespace-nowrap text-2xl font-bold tabular-nums text-emerald-700 sm:text-3xl">
-                {formatARS(result.clienteRecibe)}
+                {v(result.neto)}
               </p>
+              {netoUSD !== null && (
+                <p className="mt-1 whitespace-nowrap text-sm font-medium tabular-nums text-emerald-600">
+                  Neto en USD: {formatUSD(netoUSD)}
+                </p>
+              )}
             </div>
           </div>
         ) : (

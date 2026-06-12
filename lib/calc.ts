@@ -79,3 +79,63 @@ export function calcular({
     clienteRecibe,
   };
 }
+
+export interface PagareInputs {
+  plazoDias: number;
+  monto: number;
+  tasaTNA: number;
+  comisionTNA: number;
+}
+
+export interface PagareResult {
+  montoDescontado: number;
+  interes: number;
+  comisionCobrada: number;
+  /** IVA (21%) sobre la comisión. En el pagaré la comisión SIEMPRE lleva IVA. */
+  ivaComision: number;
+  iibb: number;
+  ddmm: number;
+  ivaDdmm: number;
+  neto: number;
+}
+
+/**
+ * Descuento de un pagaré. Comparte la base de cálculo con el eCheq pero:
+ * - El interés NUNCA lleva IVA.
+ * - La comisión SÍ lleva IVA 21%.
+ * - Los derechos de mercado llevan IVA 21% (prorrateo sobre 90 días).
+ * - IIBB sin IVA.
+ * - No existe la condición de comprador exento.
+ */
+export function calcularPagare({
+  plazoDias,
+  monto,
+  tasaTNA,
+  comisionTNA,
+}: PagareInputs): PagareResult {
+  const tasaProrrateada = (tasaTNA / 100) * (plazoDias / BASE_DIAS);
+  const comisionProrrateada = (comisionTNA / 100) * (plazoDias / BASE_DIAS);
+
+  const montoDescontado = monto / (1 + tasaProrrateada);
+  const interes = monto - montoDescontado;
+  const comisionCobrada = monto - monto / (1 + comisionProrrateada);
+  const ivaComision = comisionCobrada * IVA_ALICUOTA;
+
+  const iibb = monto * IIBB_ALICUOTA;
+  const ddmm = montoDescontado * DDMM_ALICUOTA * (plazoDias / BASE_DDMM);
+  const ivaDdmm = ddmm * IVA_ALICUOTA;
+
+  const neto =
+    montoDescontado - comisionCobrada - ivaComision - iibb - ddmm - ivaDdmm;
+
+  return {
+    montoDescontado,
+    interes,
+    comisionCobrada,
+    ivaComision,
+    iibb,
+    ddmm,
+    ivaDdmm,
+    neto,
+  };
+}
