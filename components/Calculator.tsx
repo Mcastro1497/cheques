@@ -137,6 +137,15 @@ export default function Calculator() {
                 value={formatARS(result.iva)}
               />
             )}
+            <ResultRow label="Retención IIBB" value={formatARS(result.iibb)} />
+            <ResultRow
+              label="Derechos de mercado"
+              value={formatARS(result.ddmm)}
+            />
+            <ResultRow
+              label="IVA (21% s/ derechos)"
+              value={formatARS(result.ivaDdmm)}
+            />
 
             <div className="mt-5 rounded-xl bg-emerald-50 p-5 ring-1 ring-emerald-200">
               <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
