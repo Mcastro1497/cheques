@@ -4,22 +4,27 @@ import { useMemo, useState } from "react";
 import { calcular } from "@/lib/calc";
 import { formatARS, formatMilesInput, parseMilesInput } from "@/lib/format";
 import { Field, PercentInput, ResultRow, Toggle, inputCls } from "./ui";
+import { usePlazo, type Modo } from "./usePlazo";
 
-export default function Calculator() {
-  const [plazo, setPlazo] = useState("90");
+/** Liquidación del eCheq: t+2 días hábiles. */
+const T_HABILES = 2;
+
+export default function Calculator({ mode = "dias" }: { mode?: Modo }) {
+  const { plazoDias, valido: plazoValido, field: plazoField } = usePlazo(
+    mode,
+    T_HABILES,
+  );
   const [montoStr, setMontoStr] = useState("10.000.000");
   const [tasa, setTasa] = useState("22");
   const [comision, setComision] = useState("4");
   const [exento, setExento] = useState(true);
 
-  const plazoNum = Math.floor(Number(plazo));
   const montoNum = parseMilesInput(montoStr);
   const tasaNum = Number(tasa);
   const comisionNum = Number(comision);
 
-  // Validación: todos los números deben ser positivos (plazo y monto > 0).
+  // Validación: todos los números deben ser positivos.
   const errors = {
-    plazo: plazo !== "" && (!Number.isFinite(plazoNum) || plazoNum <= 0),
     monto: montoStr !== "" && montoNum <= 0,
     tasa: tasa !== "" && (!Number.isFinite(tasaNum) || tasaNum < 0),
     comision:
@@ -27,7 +32,7 @@ export default function Calculator() {
   };
 
   const inputsValidos =
-    plazoNum > 0 &&
+    plazoValido &&
     montoNum > 0 &&
     Number.isFinite(tasaNum) &&
     tasaNum >= 0 &&
@@ -37,13 +42,13 @@ export default function Calculator() {
   const result = useMemo(() => {
     if (!inputsValidos) return null;
     return calcular({
-      plazoDias: plazoNum,
+      plazoDias,
       monto: montoNum,
       tasaTNA: tasaNum,
       comisionTNA: comisionNum,
       exento,
     });
-  }, [inputsValidos, plazoNum, montoNum, tasaNum, comisionNum, exento]);
+  }, [inputsValidos, plazoDias, montoNum, tasaNum, comisionNum, exento]);
 
   return (
     <div className="grid gap-6 md:grid-cols-[1fr_1.4fr]">
@@ -72,18 +77,7 @@ export default function Calculator() {
             </div>
           </Field>
 
-          <Field
-            label="Plazo (días)"
-            error={errors.plazo ? "Ingresá un plazo mayor a 0." : undefined}
-          >
-            <input
-              inputMode="numeric"
-              value={plazo}
-              onChange={(e) => setPlazo(e.target.value.replace(/\D/g, ""))}
-              className={inputCls(errors.plazo)}
-              placeholder="90"
-            />
-          </Field>
+          {plazoField}
 
           <Field
             label="Tasa descontada (TNA)"

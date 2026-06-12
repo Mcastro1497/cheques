@@ -16,6 +16,7 @@ import {
   SegmentedControl,
   inputCls,
 } from "./ui";
+import { usePlazo, type Modo } from "./usePlazo";
 
 type Moneda = "ARS" | "MEP" | "A3500" | "BNA";
 
@@ -29,15 +30,20 @@ const MONEDAS: { label: string; value: Moneda }[] = [
 /** Las monedas que requieren tipo de cambio para pesificar el neto. */
 const REQUIERE_TC = (m: Moneda) => m === "A3500" || m === "BNA";
 
-export default function PagareCalculator() {
-  const [plazo, setPlazo] = useState("90");
+/** Liquidación del pagaré: t+1 día hábil. */
+const T_HABILES = 1;
+
+export default function PagareCalculator({ mode = "dias" }: { mode?: Modo }) {
+  const { plazoDias, valido: plazoValido, field: plazoField } = usePlazo(
+    mode,
+    T_HABILES,
+  );
   const [montoStr, setMontoStr] = useState("10.000.000");
   const [tasa, setTasa] = useState("22");
   const [comision, setComision] = useState("4");
   const [moneda, setMoneda] = useState<Moneda>("ARS");
   const [tcStr, setTcStr] = useState("");
 
-  const plazoNum = Math.floor(Number(plazo));
   const montoNum = parseMilesInput(montoStr);
   const tasaNum = Number(tasa);
   const comisionNum = Number(comision);
@@ -45,7 +51,6 @@ export default function PagareCalculator() {
   const necesitaTc = REQUIERE_TC(moneda);
 
   const errors = {
-    plazo: plazo !== "" && (!Number.isFinite(plazoNum) || plazoNum <= 0),
     monto: montoStr !== "" && montoNum <= 0,
     tasa: tasa !== "" && (!Number.isFinite(tasaNum) || tasaNum < 0),
     comision:
@@ -54,7 +59,7 @@ export default function PagareCalculator() {
   };
 
   const inputsValidos =
-    plazoNum > 0 &&
+    plazoValido &&
     montoNum > 0 &&
     Number.isFinite(tasaNum) &&
     tasaNum >= 0 &&
@@ -65,12 +70,12 @@ export default function PagareCalculator() {
   const result = useMemo(() => {
     if (!inputsValidos) return null;
     return calcularPagare({
-      plazoDias: plazoNum,
+      plazoDias,
       monto: montoNum,
       tasaTNA: tasaNum,
       comisionTNA: comisionNum,
     });
-  }, [inputsValidos, plazoNum, montoNum, tasaNum, comisionNum]);
+  }, [inputsValidos, plazoDias, montoNum, tasaNum, comisionNum]);
 
   // El monto se ingresa en USD para cualquier moneda USD.
   const montoEnUSD = moneda !== "ARS";
@@ -135,18 +140,7 @@ export default function PagareCalculator() {
             </div>
           </Field>
 
-          <Field
-            label="Plazo (días)"
-            error={errors.plazo ? "Ingresá un plazo mayor a 0." : undefined}
-          >
-            <input
-              inputMode="numeric"
-              value={plazo}
-              onChange={(e) => setPlazo(e.target.value.replace(/\D/g, ""))}
-              className={inputCls(errors.plazo)}
-              placeholder="90"
-            />
-          </Field>
+          {plazoField}
 
           <Field
             label="Tasa descontada (TNA)"

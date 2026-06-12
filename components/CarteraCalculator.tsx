@@ -3,12 +3,19 @@
 import { useMemo, useRef, useState } from "react";
 import { calcular, type CalcResult } from "@/lib/calc";
 import { formatARS, formatMilesInput, parseMilesInput } from "@/lib/format";
+import { formatFecha, plazoDesdeVencimiento } from "@/lib/fechas";
 import { Field, PercentInput, ResultRow, Toggle, inputCls } from "./ui";
+import { useFechas } from "./FechasProvider";
+import { type Modo } from "./usePlazo";
+
+/** Liquidación del eCheq: t+2 días hábiles. */
+const T_HABILES = 2;
 
 interface Item {
   id: number;
   montoStr: string;
   plazo: string;
+  venc: string;
   tasa: string;
   comision: string;
   exento: boolean;
@@ -18,6 +25,7 @@ const nuevoItem = (id: number): Item => ({
   id,
   montoStr: "",
   plazo: "",
+  venc: "",
   tasa: "",
   comision: "",
   exento: false,
@@ -26,6 +34,8 @@ const nuevoItem = (id: number): Item => ({
 interface Computed {
   item: Item;
   monto: number;
+  plazoDias: number;
+  liquidacion: Date | null;
   valido: boolean;
   res: CalcResult | null;
 }
@@ -43,13 +53,15 @@ const TOTALES_VACIOS = {
   clienteRecibe: 0,
 };
 
-export default function CarteraCalculator() {
+export default function CarteraCalculator({ mode = "dias" }: { mode?: Modo }) {
+  const { hoy, feriadosSet } = useFechas();
   const nextId = useRef(2);
   const [items, setItems] = useState<Item[]>([
     {
       id: 0,
       montoStr: "10.000.000",
       plazo: "90",
+      venc: "",
       tasa: "22",
       comision: "4",
       exento: true,
@@ -58,6 +70,7 @@ export default function CarteraCalculator() {
       id: 1,
       montoStr: "5.000.000",
       plazo: "60",
+      venc: "",
       tasa: "25",
       comision: "4",
       exento: false,
@@ -75,11 +88,28 @@ export default function CarteraCalculator() {
     () =>
       items.map((item) => {
         const monto = parseMilesInput(item.montoStr);
-        const plazo = Math.floor(Number(item.plazo));
         const tasa = Number(item.tasa);
         const comision = Number(item.comision);
+
+        let plazoDias = 0;
+        let liquidacion: Date | null = null;
+        if (mode === "dias") {
+          plazoDias = Math.floor(Number(item.plazo));
+        } else if (hoy) {
+          const info = plazoDesdeVencimiento(
+            item.venc,
+            T_HABILES,
+            hoy,
+            feriadosSet,
+          );
+          if (info) {
+            plazoDias = info.dias;
+            liquidacion = info.liquidacion;
+          }
+        }
+
         const valido =
-          plazo > 0 &&
+          plazoDias > 0 &&
           monto > 0 &&
           Number.isFinite(tasa) &&
           tasa >= 0 &&
@@ -87,16 +117,16 @@ export default function CarteraCalculator() {
           comision >= 0;
         const res = valido
           ? calcular({
-              plazoDias: plazo,
+              plazoDias,
               monto,
               tasaTNA: tasa,
               comisionTNA: comision,
               exento: item.exento,
             })
           : null;
-        return { item, monto, valido, res };
+        return { item, monto, plazoDias, liquidacion, valido, res };
       }),
-    [items],
+    [items, mode, hoy, feriadosSet],
   );
 
   const totales = useMemo(
@@ -182,20 +212,49 @@ export default function CarteraCalculator() {
                     </div>
                   </Field>
 
-                  <div className="grid grid-cols-3 gap-3">
-                    <Field label="Plazo (días)">
+                  {mode === "fecha" && (
+                    <Field label="Fecha de vencimiento">
                       <input
-                        inputMode="numeric"
-                        value={item.plazo}
+                        type="date"
+                        value={item.venc}
                         onChange={(e) =>
-                          updateItem(item.id, {
-                            plazo: e.target.value.replace(/\D/g, ""),
-                          })
+                          updateItem(item.id, { venc: e.target.value })
                         }
-                        className={inputCls(false)}
-                        placeholder="90"
+                        className={inputCls(false) + " text-left"}
                       />
+                      {computed[idx]?.liquidacion &&
+                        computed[idx].plazoDias > 0 && (
+                          <span className="mt-1 block text-xs text-slate-500">
+                            Liquidación (t+{T_HABILES} háb.):{" "}
+                            {formatFecha(computed[idx].liquidacion as Date)} ·{" "}
+                            {computed[idx].plazoDias} días corridos
+                          </span>
+                        )}
                     </Field>
+                  )}
+
+                  <div
+                    className={
+                      mode === "dias"
+                        ? "grid grid-cols-3 gap-3"
+                        : "grid grid-cols-2 gap-3"
+                    }
+                  >
+                    {mode === "dias" && (
+                      <Field label="Plazo (días)">
+                        <input
+                          inputMode="numeric"
+                          value={item.plazo}
+                          onChange={(e) =>
+                            updateItem(item.id, {
+                              plazo: e.target.value.replace(/\D/g, ""),
+                            })
+                          }
+                          className={inputCls(false)}
+                          placeholder="90"
+                        />
+                      </Field>
+                    )}
                     <Field label="Tasa (TNA)">
                       <PercentInput
                         value={item.tasa}
@@ -307,7 +366,7 @@ export default function CarteraCalculator() {
                     <p className="mb-3 text-sm font-semibold text-slate-700">
                       eCheq #{idx + 1}{" "}
                       <span className="font-normal text-slate-400">
-                        · {formatARS(c.monto)} · {c.item.plazo} días ·{" "}
+                        · {formatARS(c.monto)} · {c.plazoDias} días ·{" "}
                         {c.item.exento ? "exento" : "no exento"}
                       </span>
                     </p>
