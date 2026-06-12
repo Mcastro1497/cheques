@@ -45,7 +45,7 @@ export default function Calculator() {
   }, [inputsValidos, plazoNum, montoNum, tasaNum, comisionNum, exento]);
 
   return (
-    <div className="grid gap-6 md:grid-cols-2">
+    <div className="grid gap-6 md:grid-cols-[1fr_1.4fr]">
       {/* Formulario */}
       <section className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
         <h2 className="mb-5 text-sm font-semibold uppercase tracking-wide text-slate-500">
@@ -151,7 +151,7 @@ export default function Calculator() {
               <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
                 Monto neto que recibe el cliente
               </p>
-              <p className="mt-1 text-3xl font-bold tabular-nums text-emerald-700">
+              <p className="mt-1 whitespace-nowrap text-2xl font-bold tabular-nums text-emerald-700 sm:text-3xl">
                 {formatARS(result.clienteRecibe)}
               </p>
             </div>
@@ -256,9 +256,9 @@ function Toggle({
 
 function ResultRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+    <div className="flex items-center justify-between gap-4 border-b border-slate-100 pb-3">
       <span className="text-sm text-slate-600">{label}</span>
-      <span className="text-base font-semibold tabular-nums text-slate-900">
+      <span className="whitespace-nowrap text-base font-semibold tabular-nums text-slate-900">
         {value}
       </span>
     </div>
