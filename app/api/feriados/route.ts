@@ -7,6 +7,12 @@ export const runtime = "nodejs";
 const KEY = "cheques:feriados";
 const ISO_RE = /^\d{4}-\d{2}-\d{2}$/;
 
+/** Contraseña para editar feriados. Configurable por env, con default. */
+function passwordOk(req: Request): boolean {
+  const esperada = process.env.FERIADOS_PASSWORD ?? "trolazo123";
+  return req.headers.get("x-feriados-password") === esperada;
+}
+
 /**
  * Construye el cliente Redis a partir de las variables que inyecte Upstash,
  * sin importar el prefijo (KV_REST_API_* o UPSTASH_REDIS_REST_*).
@@ -39,6 +45,9 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  if (!passwordOk(req)) {
+    return NextResponse.json({ error: "Contraseña incorrecta" }, { status: 401 });
+  }
   const redis = getRedis();
   if (!redis) {
     return NextResponse.json({ error: "Redis no configurado" }, { status: 503 });
@@ -52,6 +61,9 @@ export async function POST(req: Request) {
 }
 
 export async function DELETE(req: Request) {
+  if (!passwordOk(req)) {
+    return NextResponse.json({ error: "Contraseña incorrecta" }, { status: 401 });
+  }
   const redis = getRedis();
   if (!redis) {
     return NextResponse.json({ error: "Redis no configurado" }, { status: 503 });

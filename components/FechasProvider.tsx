@@ -11,14 +11,22 @@ import { startOfDay } from "@/lib/fechas";
 
 type Estado = "cargando" | "compartido" | "local";
 
+interface Resultado {
+  ok: boolean;
+  error?: string;
+}
+
 interface FechasCtx {
   /** Hoy a medianoche, o null hasta hidratar en el cliente. */
   hoy: Date | null;
   /** Feriados cargados, en ISO "YYYY-MM-DD". */
   feriados: string[];
   feriadosSet: Set<string>;
-  addFeriado: (iso: string) => void;
-  removeFeriado: (iso: string) => void;
+  addFeriado: (iso: string) => Promise<Resultado>;
+  removeFeriado: (iso: string) => Promise<Resultado>;
+  /** Contraseña para editar feriados. */
+  password: string;
+  setPassword: (p: string) => void;
   /** "compartido": persisten en Vercel KV. "local": KV sin configurar. */
   estado: Estado;
 }
@@ -33,6 +41,7 @@ export function FechasProvider({ children }: { children: React.ReactNode }) {
   const [feriados, setFeriados] = useState<string[]>([]);
   const [hoy, setHoy] = useState<Date | null>(null);
   const [estado, setEstado] = useState<Estado>("cargando");
+  const [password, setPassword] = useState("");
 
   useEffect(() => {
     setHoy(startOfDay(new Date()));
@@ -52,22 +61,40 @@ export function FechasProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  const addFeriado = (iso: string) => {
-    setFeriados((prev) => ordenar([...prev, iso]));
-    fetch("/api/feriados", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ date: iso }),
-    }).catch(() => {});
+  const editar = async (
+    metodo: "POST" | "DELETE",
+    iso: string,
+  ): Promise<Resultado> => {
+    try {
+      const r = await fetch("/api/feriados", {
+        method: metodo,
+        headers: {
+          "Content-Type": "application/json",
+          "x-feriados-password": password,
+        },
+        body: JSON.stringify({ date: iso }),
+      });
+      if (!r.ok) {
+        if (r.status === 401) return { ok: false, error: "Contraseña incorrecta." };
+        const data = await r.json().catch(() => ({}));
+        return { ok: false, error: data.error || "No se pudo guardar." };
+      }
+      return { ok: true };
+    } catch {
+      return { ok: false, error: "Error de red." };
+    }
   };
 
-  const removeFeriado = (iso: string) => {
-    setFeriados((prev) => prev.filter((f) => f !== iso));
-    fetch("/api/feriados", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ date: iso }),
-    }).catch(() => {});
+  const addFeriado = async (iso: string): Promise<Resultado> => {
+    const res = await editar("POST", iso);
+    if (res.ok) setFeriados((prev) => ordenar([...prev, iso]));
+    return res;
+  };
+
+  const removeFeriado = async (iso: string): Promise<Resultado> => {
+    const res = await editar("DELETE", iso);
+    if (res.ok) setFeriados((prev) => prev.filter((f) => f !== iso));
+    return res;
   };
 
   const feriadosSet = useMemo(() => new Set(feriados), [feriados]);
@@ -78,6 +105,8 @@ export function FechasProvider({ children }: { children: React.ReactNode }) {
     feriadosSet,
     addFeriado,
     removeFeriado,
+    password,
+    setPassword,
     estado,
   };
 

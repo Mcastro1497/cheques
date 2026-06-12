@@ -6,15 +6,32 @@ import { useFechas } from "./FechasProvider";
 import { inputCls } from "./ui";
 
 export default function Feriados() {
-  const { feriados, addFeriado, removeFeriado, estado } = useFechas();
+  const {
+    feriados,
+    addFeriado,
+    removeFeriado,
+    password,
+    setPassword,
+    estado,
+  } = useFechas();
   const [nuevo, setNuevo] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
-  const agregar = () => {
-    if (nuevo) {
-      addFeriado(nuevo);
-      setNuevo("");
-    }
+  const agregar = async () => {
+    if (!nuevo) return;
+    setError(null);
+    const res = await addFeriado(nuevo);
+    if (res.ok) setNuevo("");
+    else setError(res.error ?? "No se pudo agregar.");
   };
+
+  const eliminar = async (iso: string) => {
+    setError(null);
+    const res = await removeFeriado(iso);
+    if (!res.ok) setError(res.error ?? "No se pudo eliminar.");
+  };
+
+  const sinPassword = password === "";
 
   return (
     <section className="mx-auto max-w-md rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
@@ -41,6 +58,19 @@ export default function Feriados() {
         )}
       </p>
 
+      <label className="mb-4 block">
+        <span className="mb-1.5 block text-sm font-medium text-slate-700">
+          Contraseña para editar
+        </span>
+        <input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className={inputCls(false) + " text-left"}
+          placeholder="••••••••"
+        />
+      </label>
+
       <div className="flex gap-2">
         <input
           type="date"
@@ -51,12 +81,19 @@ export default function Feriados() {
         <button
           type="button"
           onClick={agregar}
-          disabled={!nuevo}
+          disabled={!nuevo || sinPassword}
           className="shrink-0 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-40"
         >
           Agregar
         </button>
       </div>
+
+      {sinPassword && (
+        <p className="mt-2 text-xs text-slate-400">
+          Ingresá la contraseña para poder agregar o eliminar feriados.
+        </p>
+      )}
+      {error && <p className="mt-2 text-xs text-red-500">{error}</p>}
 
       <div className="mt-6">
         {feriados.length === 0 ? (
@@ -75,8 +112,9 @@ export default function Feriados() {
                   </span>
                   <button
                     type="button"
-                    onClick={() => removeFeriado(iso)}
-                    className="text-sm font-medium text-slate-400 transition hover:text-red-500"
+                    onClick={() => eliminar(iso)}
+                    disabled={sinPassword}
+                    className="text-sm font-medium text-slate-400 transition hover:text-red-500 disabled:cursor-not-allowed disabled:opacity-40"
                     aria-label="Eliminar feriado"
                   >
                     Eliminar
