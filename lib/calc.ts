@@ -15,6 +15,8 @@ export interface CalcResult {
   montoDescontado: number;
   interes: number;
   comisionCobrada: number;
+  /** IVA (21%) sobre la comisión. */
+  ivaComision: number;
   /** IVA sobre el interés (0 si el comprador es exento). */
   iva: number;
   /** Retención de Ingresos Brutos. */
@@ -56,6 +58,7 @@ export function calcular({
   const montoDescontado = monto / (1 + tasaProrrateada);
   const interes = monto - montoDescontado;
   const comisionCobrada = monto - monto / (1 + comisionProrrateada);
+  const ivaComision = comisionCobrada * IVA_ALICUOTA;
 
   const iva = exento ? 0 : IVA_ALICUOTA * interes;
 
@@ -65,12 +68,13 @@ export function calcular({
   const ddmmConIva = ddmm + ivaDdmm;
 
   const clienteRecibe =
-    montoDescontado - comisionCobrada - iibb - ddmmConIva - iva;
+    montoDescontado - comisionCobrada - ivaComision - iibb - ddmmConIva - iva;
 
   return {
     montoDescontado,
     interes,
     comisionCobrada,
+    ivaComision,
     iva,
     iibb,
     ddmm,

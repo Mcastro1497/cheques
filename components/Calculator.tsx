@@ -132,6 +132,10 @@ export default function Calculator() {
               label="Comisión cobrada"
               value={formatARS(result.comisionCobrada)}
             />
+            <ResultRow
+              label="IVA (21% s/ comisión)"
+              value={formatARS(result.ivaComision)}
+            />
             {!exento && (
               <ResultRow
                 label="IVA (21% s/ interés)"
