@@ -54,19 +54,6 @@ export default function Calculator() {
 
         <div className="space-y-5">
           <Field
-            label="Plazo (días)"
-            error={errors.plazo ? "Ingresá un plazo mayor a 0." : undefined}
-          >
-            <input
-              inputMode="numeric"
-              value={plazo}
-              onChange={(e) => setPlazo(e.target.value.replace(/\D/g, ""))}
-              className={inputCls(errors.plazo)}
-              placeholder="90"
-            />
-          </Field>
-
-          <Field
             label="Monto del eCheq"
             error={errors.monto ? "El monto debe ser mayor a 0." : undefined}
           >
@@ -84,31 +71,42 @@ export default function Calculator() {
             </div>
           </Field>
 
-          <div className="grid grid-cols-2 gap-4">
-            <Field
-              label="Tasa descontada (TNA)"
-              error={errors.tasa ? "Inválida." : undefined}
-            >
-              <PercentInput
-                value={tasa}
-                onChange={setTasa}
-                error={errors.tasa}
-                placeholder="22"
-              />
-            </Field>
+          <Field
+            label="Plazo (días)"
+            error={errors.plazo ? "Ingresá un plazo mayor a 0." : undefined}
+          >
+            <input
+              inputMode="numeric"
+              value={plazo}
+              onChange={(e) => setPlazo(e.target.value.replace(/\D/g, ""))}
+              className={inputCls(errors.plazo)}
+              placeholder="90"
+            />
+          </Field>
 
-            <Field
-              label="Comisión (TNA)"
-              error={errors.comision ? "Inválida." : undefined}
-            >
-              <PercentInput
-                value={comision}
-                onChange={setComision}
-                error={errors.comision}
-                placeholder="4"
-              />
-            </Field>
-          </div>
+          <Field
+            label="Tasa descontada (TNA)"
+            error={errors.tasa ? "Inválida." : undefined}
+          >
+            <PercentInput
+              value={tasa}
+              onChange={setTasa}
+              error={errors.tasa}
+              placeholder="22"
+            />
+          </Field>
+
+          <Field
+            label="Comisión (TNA)"
+            error={errors.comision ? "Inválida." : undefined}
+          >
+            <PercentInput
+              value={comision}
+              onChange={setComision}
+              error={errors.comision}
+              placeholder="4"
+            />
+          </Field>
 
           <Field label="Comprador exento de IVA">
             <Toggle value={exento} onChange={setExento} />

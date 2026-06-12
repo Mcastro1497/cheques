@@ -16,7 +16,7 @@ export default function Home() {
       <Calculator />
 
       <footer className="mt-8 text-center text-xs text-slate-400">
-        El IVA aplica sólo sobre el interés. Cálculo orientativo.
+        Cálculo orientativo.
       </footer>
     </main>
   );
